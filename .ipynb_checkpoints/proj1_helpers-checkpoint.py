@@ -128,3 +128,13 @@ def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
         if start_index != end_index:
             yield shuffled_y[start_index:end_index], shuffled_tx[start_index:end_index]
             
+            
+def build_poly(x, degree):
+    """polynomial basis functions for input data x, for j=0 up to j=degree."""
+    
+    phi = np.zeros((x.shape[0], degree+1))
+    curr_x = np.ones(x.shape)
+    for i in range(degree+1):
+        phi[:,i] = curr_x
+        curr_x = curr_x*x
+    return phi

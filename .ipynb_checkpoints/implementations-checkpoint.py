@@ -3,6 +3,8 @@
 """ML methods"""
 
 import numpy as np
+from costs import *
+from proj1_helpers import *
 
 def least_squares_GD(y, tx, initial_w, max_iters, gamma):
     """
@@ -69,7 +71,7 @@ def least_squares_SGD(y, tx, initial_w, max_iters, gamma):
     def stochastic_gradient_descent(
             y, tx, initial_w, batch_size, max_iters, gamma):
         """Stochastic gradient descent algorithm."""
-        w = w_initial
+        w = initial_w
         for n_iter in range(max_iters):
             loss = compute_loss(y, tx, w, loss='MSE')
             grad = compute_stoch_gradient(y, tx, w, batch_size)
@@ -93,7 +95,7 @@ def least_squares(y, tx):
     loss = (1/(2*N))*((err.T).dot(err))
     #TODO
     loss = np.sqrt(2*loss)
-    return loss, w
+    return w, loss
 
 
 def ridge_regression(y, tx, lambda_):
@@ -112,7 +114,7 @@ def ridge_regression(y, tx, lambda_):
     N = y.shape[0]
     loss = (1/(2*N))*((err.T).dot(err))
     loss = np.sqrt(2*loss)
-    return loss, w
+    return w, loss
 
 
 def logistic_regression(y, tx, initial_w, max_iters, gamma):
@@ -161,7 +163,7 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma):
     return w, loss
 
 
-def reg_logistic_regression(y, tx, lambda_, initial w, max_iters, gamma):
+def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
     """
     Regularized logistic regression using gradient descent
     
@@ -214,23 +216,3 @@ def reg_logistic_regression(y, tx, lambda_, initial w, max_iters, gamma):
 def sigmoid(t):
     """apply the sigmoid function on t."""
     return 1/(1+np.exp(-t))
-
-
-def compute_loss(y, tx, w, loss='MSE'):
-    """Calculate the loss.
-
-    You can calculate the loss using mse or mae.
-    """
-    # ***************************************************
-    # INSERT YOUR CODE HERE
-    # TODO: compute loss by MSE
-    # ***************************************************
-    if loss not in ['MSE', 'MAE']:
-        raise Exception("Loss function {} is not supported".format(loss))
-    else:
-        err = y-tx.dot(w)
-        N = y.shape[0]
-        if loss=='MSE':
-            return (1/(2*N))*((err.T).dot(err))
-        elif loss=='MAE':
-            return (1/(2*N))*(np.abs(err).sum())
