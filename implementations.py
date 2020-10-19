@@ -129,10 +129,9 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma):
     """
     
     def calculate_loss(y, tx, w):
-        """compute the loss: negative log likelihood."""
-        fst = np.apply_along_axis(lambda x: sigmoid(x), axis=0, arr=tx.dot(w))
-        snd = tx.dot(w)*y
-        return (fst-snd).sum()
+    """compute the loss: negative log likelihood."""
+        sig = sigmoid(tx.dot(w))
+        return -np.sum(y * np.log(sig) + (1-y) * np.log(1 - sig))
     
     def calculate_gradient(y, tx, w):
         """compute the gradient of loss."""
