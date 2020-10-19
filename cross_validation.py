@@ -42,8 +42,7 @@ def cross_validation_single_fold(y, x, k_indices, k, metric, learning_model, **k
     # ***************************************************
     # learning
     # *************************************************** 
-    x_train, x_test = preprocess_data(x_train, x_test, learning_model, **kwargs)
-    w, loss_tr = run_model(learning_model, y, x, **kwargs) 
+    w, loss_tr = run_model(learning_model, y_train, x_train, **kwargs) 
     # TODO might be required for ridge reg : mse_te = compute_mse(y_test, x_test, w)
     loss_te = compute_loss(y_test, x_test, w)
     # ***************************************************
@@ -112,28 +111,3 @@ def run_model(learning_model, y, x, **kwargs):
         return reg_logistic_regression(y, x, kwargs['lambda_'], kwargs['initial_w'], kwargs['max_iters'], kwargs['gamma'])
     else:
         raise Exception('Learning method {} is currently not supported.'.format(learning_model))
-        
-        
-def build_poly(x, degree):
-    """polynomial basis functions for input data x, for j=0 up to j=degree."""
-    
-    phi = np.zeros((x.shape[0], degree+1))
-    curr_x = np.ones(x.shape)
-    for i in range(degree+1):
-        phi[:,i] = curr_x
-        curr_x = curr_x*x
-    return phi
-
-def preprocess_data(x_train, x_test, learning_model, **kwargs):
-    """
-    Performs necessary data tranformation for the given learning model
-    
-    TODO
-    """
-    mod = learning_model.lower()
-    if mod == 'ridge_regression':
-        x_train = build_poly(x_train, kwargs['degree'])
-        x_test = build_poly(x_test, kwargs['degree'])
-        return x_train, x_test
-    else:
-        return x_train, x_test
