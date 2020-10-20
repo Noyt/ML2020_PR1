@@ -113,7 +113,8 @@ def ridge_regression(y, tx, lambda_):
     err = y-tx.dot(w)
     N = y.shape[0]
     loss = (1/(2*N))*((err.T).dot(err))
-    loss = np.sqrt(2*loss)
+    # TODO now is mse, for comparison sake
+    #loss = np.sqrt(2*loss)
     return w, loss
 
 
