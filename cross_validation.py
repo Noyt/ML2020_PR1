@@ -43,7 +43,6 @@ def cross_validation_single_fold(y, x, k_indices, k, metric, learning_model, **k
     # learning
     # *************************************************** 
     w, loss_tr = run_model(learning_model, y_train, x_train, **kwargs) 
-    # TODO might be required for ridge reg : mse_te = compute_mse(y_test, x_test, w)
     loss_te = compute_loss(y_test, x_test, w)
     # ***************************************************
     # metric
