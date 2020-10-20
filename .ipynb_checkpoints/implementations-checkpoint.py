@@ -113,7 +113,8 @@ def ridge_regression(y, tx, lambda_):
     err = y-tx.dot(w)
     N = y.shape[0]
     loss = (1/(2*N))*((err.T).dot(err))
-    loss = np.sqrt(2*loss)
+    # TODO now is mse, for comparison sake
+    #loss = np.sqrt(2*loss)
     return w, loss
 
 
@@ -130,30 +131,25 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma):
     
     def calculate_loss(y, tx, w):
         """compute the loss: negative log likelihood."""
-        fst = np.apply_along_axis(lambda x: sigmoid(x), axis=0, arr=tx.dot(w))
-        snd = tx.dot(w)*y
-        return (fst-snd).sum()
+        sig = np.squeeze(sigmoid(tx.dot(w)))
+        return - (y * np.log(sig) + (1-y) * np.log(1 - sig)).sum()
     
     def calculate_gradient(y, tx, w):
         """compute the gradient of loss."""
-        sig = np.apply_along_axis(lambda x: sigmoid(x), axis=0, arr=tx.dot(w))
-        return tx.T.dot(sig-y)
+        sig = np.squeeze(sigmoid(tx.dot(w)))
+        return tx.T.dot(sig - y)
     
     threshold = 1e-8
     previous_loss = None
 
-    # build tx
-    #TODO?
-    tx = np.c_[np.ones((y.shape[0], 1)), x]
-    w = np.zeros((tx.shape[1], 1))
-
+    w = initial_w
+    
     # start the logistic regression
-    for iter in range(max_iter):
+    for iter in range(max_iters):
         # get loss and update w.
         loss = calculate_loss(y, tx, w)
         grad = calculate_gradient(y, tx, w)
-        w = w - gamma*grad
-        
+        w = w - gamma * grad
         # converge criterion
         if iter > 0 and np.abs(loss - previous_loss) < threshold:
             break
@@ -177,28 +173,25 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
 
     def calculate_penalized_loss(y, tx, w, lambda_):
         """compute the loss: negative log likelihood + regularization."""
-        fst = np.apply_along_axis(lambda x: sigmoid(x), axis=0, arr=tx.dot(w))
-        snd = tx.dot(w)*y
+        sig = np.squeeze(sigmoid(tx.dot(w)))
         trd = (lambda_/2)*np.linalg.norm(w)**2
-        return (fst-snd).sum()+trd
+        return - (y * np.log(sig) + (1-y) * np.log(1 - sig)).sum() + trd
 
     def calculate_penalized_gradient(y, tx, w, lambda_):
         """compute the gradient of penalized loss."""
-        sig = np.apply_along_axis(lambda x: sigmoid(x), axis=0, arr=tx.dot(w))
+        sig = np.squeeze(sigmoid(tx.dot(w)))
         return tx.T.dot(sig-y)+lambda_*w
     
     threshold = 1e-8
     previous_loss = None
 
-    # build tx
-    tx = np.c_[np.ones((y.shape[0], 1)), x]
-    w = np.zeros((tx.shape[1], 1))
+    w = initial_w
 
     # start the logistic regression
-    for iter in range(max_iter):
+    for iter in range(max_iters):
         # get loss and update w.
-        loss = calculate_penalized_loss(y, tx, w)
-        grad = calculate_penalized_gradient(y, tx, w)
+        loss = calculate_penalized_loss(y, tx, w, lambda_)
+        grad = calculate_penalized_gradient(y, tx, w, lambda_)
         w = w - gamma*grad
         
         # converge criterion
@@ -215,4 +208,6 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
 
 def sigmoid(t):
     """apply the sigmoid function on t."""
-    return 1/(1+np.exp(-t))
+    """TODO plus joli/mieux"""
+    ret = 1 / (1 + np.exp(-t))
+    return np.clip(ret, 10**(-10), 1 - 10**(-10))
