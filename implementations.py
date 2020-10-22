@@ -34,7 +34,7 @@ def least_squares_GD(y, tx, initial_w, max_iters, gamma):
             # ***************************************************
             # compute gradient and loss
             # ***************************************************
-            loss = compute_loss(y, tx, w, 'MSE')
+            loss = compute_loss_regression(y, tx, w, 'MSE')
             grad = compute_gradient(y, tx, w)
             # ***************************************************
             # update w by gradient
@@ -73,7 +73,7 @@ def least_squares_SGD(y, tx, initial_w, max_iters, gamma):
         """Stochastic gradient descent algorithm."""
         w = initial_w
         for n_iter in range(max_iters):
-            loss = compute_loss(y, tx, w, loss='MSE')
+            loss = compute_loss_regression(y, tx, w, loss='MSE')
             grad = compute_stoch_gradient(y, tx, w, batch_size)
             w = w - gamma*grad
         return w, loss
@@ -89,12 +89,11 @@ def least_squares(y, tx):
     # Compute closed form solution
     w = np.linalg.solve(tx.T.dot(tx), tx.T.dot(y))
     
-    #Compute rmse loss
+    #Compute mse loss
     err = y-tx.dot(w)
     N = y.shape[0]
     loss = (1/(2*N))*((err.T).dot(err))
     #TODO
-    loss = np.sqrt(2*loss)
     return w, loss
 
 
@@ -129,14 +128,9 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma):
     gamma: learning rate
     """
     
-    def calculate_loss(y, tx, w):
-        """compute the loss: negative log likelihood."""
-        sig = np.squeeze(sigmoid(tx.dot(w)))
-        return - (y * np.log(sig) + (1-y) * np.log(1 - sig)).sum()
-    
     def calculate_gradient(y, tx, w):
         """compute the gradient of loss."""
-        sig = np.squeeze(sigmoid(tx.dot(w)))
+        sig = sigmoid(tx.dot(w))
         return tx.T.dot(sig - y)
     
     threshold = 1e-8
@@ -147,7 +141,9 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma):
     # start the logistic regression
     for iter in range(max_iters):
         # get loss and update w.
-        loss = calculate_loss(y, tx, w)
+        loss = compute_loss_classification(y, tx, w)
+        if iter % 100 == 0:
+            print("Current iteration={i}, loss={l}".format(i=iter, l=loss))
         grad = calculate_gradient(y, tx, w)
         w = w - gamma * grad
         # converge criterion
@@ -173,13 +169,13 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
 
     def calculate_penalized_loss(y, tx, w, lambda_):
         """compute the loss: negative log likelihood + regularization."""
-        sig = np.squeeze(sigmoid(tx.dot(w)))
+        sig = sigmoid(tx.dot(w))
         trd = (lambda_/2)*np.linalg.norm(w)**2
         return - (y * np.log(sig) + (1-y) * np.log(1 - sig)).sum() + trd
 
     def calculate_penalized_gradient(y, tx, w, lambda_):
         """compute the gradient of penalized loss."""
-        sig = np.squeeze(sigmoid(tx.dot(w)))
+        sig = sigmoid(tx.dot(w))
         return tx.T.dot(sig-y)+lambda_*w
     
     threshold = 1e-8
@@ -201,13 +197,3 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
             previous_loss = loss
     
     return w, loss
-
-
-################ Helpers Functions ################
-
-
-def sigmoid(t):
-    """apply the sigmoid function on t."""
-    """TODO plus joli/mieux"""
-    ret = 1 / (1 + np.exp(-t))
-    return np.clip(ret, 10**(-10), 1 - 10**(-10))

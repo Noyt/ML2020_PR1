@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """Cross validation toolbox"""
 
+import matplotlib.pyplot as plt
 import numpy as np
 from costs import *
 from implementations import *
+from plots import *
 
 def build_k_indices(y, k_fold, seed):
     """build k indices for k-fold."""
@@ -43,7 +45,7 @@ def cross_validation_single_fold(y, x, k_indices, k, metric, learning_model, **k
     # learning
     # *************************************************** 
     w, loss_tr = run_model(learning_model, y_train, x_train, **kwargs) 
-    loss_te = compute_loss(y_test, x_test, w)
+    loss_te = compute_loss(learning_model, y_test, x_test, w)
     # ***************************************************
     # metric
     # *************************************************** 
@@ -219,8 +221,8 @@ def cross_validation_hyper_search(y, x, param_name, search_space, metric, learni
         
     # Plotting
     fig, axes = plt.subplots(2, 1, figsize=(10,7), sharex=True, sharey=False)
-    cross_validation_visualization_loss(search_space, mse_tr, mse_te, axes[0])
+    cross_validation_visualization_loss(search_space, mse_tr, mse_te, param_name, axes[0])
     # TODO accuracy make generic
-    cross_validation_visualization_metric(search_space, metric_tr, metric_te, 'accuracy', axes[1])
+    cross_validation_visualization_metric(search_space, metric_tr, metric_te, param_name, 'accuracy', axes[1])
     
     return loss_to_param[np.min(list(loss_to_param.keys()))]
