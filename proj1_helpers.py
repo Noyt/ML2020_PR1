@@ -77,7 +77,88 @@ def normalise(tx):
     tx = (tx-min_)/(max_-min_)
     return tx
 
+def manage_999(y, tx, idx) :
+    """
+    Modify the -999s to represent the distribution of the value of each columns depending on their label
     
+    y: The label vector
+    tx: The dataset
+    idx: The index of the row for which we want to manage the -999s
+    """
+    idx_s = []
+    mass_pos_s = []
+    idx_b = []
+    mass_pos_b = []
+    
+    for i in range(y.shape[0]) :
+        if (y[i] == 1) :
+            idx_s.append(i)
+        else :
+            idx_b.append(i)
+    
+    for i_s in idx_s :
+        mass = tx[i_s, idx]
+        if (mass != -999) :
+            mass_pos_s.append(mass)
+    for i_b in idx_b :
+        mass = tx[i_b, idx]
+        if (mass != -999) :
+            mass_pos_b.append(mass)
+    
+    len_s = len(mass_pos_s)
+    len_b = len(mass_pos_b)
+    
+    for i_s in idx_s :
+        mass = tx[i_s, idx]
+        if (mass == -999) :
+            tx[i_s, idx] = mass_pos_s[int(np.random.randint(len_s, size = 1))]
+    for i_b in idx_b :
+        mass = tx[i_b, idx]
+        if (mass == -999) :
+            tx[i_b, idx] = mass_pos_b[int(np.random.randint(len_b, size = 1))]
+    
+def mass_abs(tx) :
+    """
+    Manage the -999s in the DER_mass_MMC column (to do it we found an interval in which the distribution of (-1, 1) is pretty similar as the one of         -999, the interval is (60, 80). The masses are going to be uniformely distributed over this interval), substract 125 (Approximate of the mass of the     Higgs boson) and compute the absolute value of it.
+    
+    tx: The dataset in which we have the DER_mass_MMC column we want to modifiy
+    """
+    nb999 = np.sum(tx[:,0] == -999)
+    uni = np.random.uniform(60, 80, nb999)
+    for i in range(tx.shape[1]) :
+        if (tx[i, 0] == -999) :
+            tx[i, 0] = uni[int(np.random.randint(nb999, size = 1))]
+    tx[:,0] = np.abs(tx[:,0] - 125)
+    
+def build_poly(tx, degree) :
+    """
+    Polynomial extension from j=1 to degree of each components of tx 
+    """
+    poly = np.zeros((tx.shape[0], tx.shape[1] * degree))
+    poly[:,:tx.shape[1]] = tx
+    for i in range(2, degree + 1) :
+        for j in range(tx.shape[1]) :
+            poly[:,tx.shape[1] * (i - 1) + j] = tx[:,j] ** i
+    return poly
+            
+    
+    
+def split_data(x, y, ratio, seed=1):
+    """
+    split the dataset based on the split ratio. If ratio is 0.8 
+    you will have 80% of your data set dedicated to training 
+    and the rest dedicated to testing
+    """
+    # set seed
+    np.random.seed(seed)    
+    random_pick = np.random.default_rng().choice(x.shape[0], int(x.shape[0]*ratio), replace=False)
+    
+    x_train = x[random_pick]
+    y_train = y[random_pick]
+    x_test = np.delete(x, random_pick)
+    y_test = np.delete(y, random_pick)
+    
+    return x_train, y_train, x_test, y_test
 
 def sigmoid(t):
     """apply the sigmoid function on t."""
