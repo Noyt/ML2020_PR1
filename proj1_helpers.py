@@ -134,11 +134,12 @@ def build_poly(tx, degree) :
     """
     Polynomial extension from j=1 to degree of each components of tx 
     """
-    poly = np.zeros((tx.shape[0], tx.shape[1] * degree))
-    poly[:,:tx.shape[1]] = tx
+    shape = tx.shape
+    poly = np.zeros((shape[0], (shape[1] - 1) * degree + 1)) # Taking into account the bias
+    poly[:,:shape[1]] = tx
     for i in range(2, degree + 1) :
-        for j in range(tx.shape[1]) :
-            poly[:,tx.shape[1] * (i - 1) + j] = tx[:,j] ** i
+        for j in range(1, shape[1]) :
+            poly[:,(shape[1] - 1) * (i - 1) + j] = tx[:,j] ** i
     return poly
             
     

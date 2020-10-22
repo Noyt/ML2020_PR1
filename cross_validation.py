@@ -78,7 +78,6 @@ def cross_validation(y, x, metric, learning_model, k_fold = 4, degree = 1, **kwa
     
     # Polynomial expansion, normalisation and bias augmentation
     poly = build_poly(x, degree)
-    poly = np.c_[np.ones(len(poly[:,0])), poly]
     
     # ***************************************************
     # cross validation
@@ -115,7 +114,7 @@ def run_model(learning_model, y, x, **kwargs):
     elif mod == 'logistic_regression':
         return logistic_regression(y, x, kwargs['initial_w'], kwargs['max_iters'], kwargs['gamma'])
     elif mod == 'reg_logistic_regression':
-        return reg_logistic_regression(y, x, kwargs['lambda_'], kwargs['initial_w'], kwargs['max_iters'], kwargs['gamma'])
+        return reg_logistic_regression(y, x, kwargs['lambda_'], kwargs['initial_w'], kwargs['max_iters'], kwargs['gamma'], kwargs['norm'])
     else:
         raise Exception('Learning method {} is currently not supported.'.format(learning_model))
         
