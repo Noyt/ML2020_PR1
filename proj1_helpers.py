@@ -77,46 +77,7 @@ def normalise(tx):
     tx = (tx-min_)/(max_-min_)
     return tx
 
-def manage_999(y, tx, idx) :
-    """
-    Modify the -999s to represent the distribution of the value of each columns depending on their label
-    
-    y: The label vector
-    tx: The dataset
-    idx: The index of the row for which we want to manage the -999s
-    """
-    idx_s = []
-    mass_pos_s = []
-    idx_b = []
-    mass_pos_b = []
-    
-    for i in range(y.shape[0]) :
-        if (y[i] == 1) :
-            idx_s.append(i)
-        else :
-            idx_b.append(i)
-    
-    for i_s in idx_s :
-        mass = tx[i_s, idx]
-        if (mass != -999) :
-            mass_pos_s.append(mass)
-    for i_b in idx_b :
-        mass = tx[i_b, idx]
-        if (mass != -999) :
-            mass_pos_b.append(mass)
-    
-    len_s = len(mass_pos_s)
-    len_b = len(mass_pos_b)
-    
-    for i_s in idx_s :
-        mass = tx[i_s, idx]
-        if (mass == -999) :
-            tx[i_s, idx] = mass_pos_s[int(np.random.randint(len_s, size = 1))]
-    for i_b in idx_b :
-        mass = tx[i_b, idx]
-        if (mass == -999) :
-            tx[i_b, idx] = mass_pos_b[int(np.random.randint(len_b, size = 1))]
-    
+
 def mass_abs(tx) :
     """
     Manage the -999s in the DER_mass_MMC column (to do it we found an interval in which the distribution of (-1, 1) is pretty similar as the one of         -999, the interval is (60, 80). The masses are going to be uniformely distributed over this interval), substract 125 (Approximate of the mass of the     Higgs boson) and compute the absolute value of it.

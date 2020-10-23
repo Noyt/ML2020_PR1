@@ -54,7 +54,7 @@ def cross_validation_single_fold(y, x, k_indices, k, metric, learning_model, **k
     return loss_tr, loss_te, metric_tr, metric_te
 
 
-def cross_validation(y, x, metric, learning_model, k_fold, **kwargs):
+def cross_validation(y, x, metric, learning_model, k_fold = 4, degree = 1, **kwargs):
     """
     returns the average losses (train and test) and the average measure over a k-fold
     
@@ -63,6 +63,7 @@ def cross_validation(y, x, metric, learning_model, k_fold, **kwargs):
     metric: (function) metric to compute (e.g. accuracy, recall)
     learning_model: str, method to employ (e.g. 'least_squares', 'ridge_regression')
     k_fold: number of folds to perform
+    degree: degree of the polynomial expension
     **kwargs: additional arguments for learning method (e.g. lambda, degree)
     returns: mean training loss, test loss, training metric, test metric
     """
@@ -74,12 +75,16 @@ def cross_validation(y, x, metric, learning_model, k_fold, **kwargs):
     losses_te = []
     metrics_tr = []
     metrics_te = []
+    
+    # Polynomial expansion, normalisation and bias augmentation
+    poly = build_poly(x, degree)
+    
     # ***************************************************
     # cross validation
     # ***************************************************
 
     for k in range(len(k_indices)):
-        loss_tr, loss_te, metric_tr, metric_te = cross_validation_single_fold(y, x, k_indices, k, metric, learning_model, **kwargs)
+        loss_tr, loss_te, metric_tr, metric_te = cross_validation_single_fold(y, poly, k_indices, k, metric, learning_model, **kwargs)
         losses_tr.append(loss_tr)
         losses_te.append(loss_te)
         metrics_tr.append(metric_tr)
@@ -109,65 +114,10 @@ def run_model(learning_model, y, x, **kwargs):
     elif mod == 'logistic_regression':
         return logistic_regression(y, x, kwargs['initial_w'], kwargs['max_iters'], kwargs['gamma'])
     elif mod == 'reg_logistic_regression':
-        return reg_logistic_regression(y, x, kwargs['lambda_'], kwargs['initial_w'], kwargs['max_iters'], kwargs['gamma'])
+        return reg_logistic_regression(y, x, kwargs['lambda_'], kwargs['initial_w'], kwargs['max_iters'], kwargs['gamma'], kwargs['norm'])
     else:
         raise Exception('Learning method {} is currently not supported.'.format(learning_model))
         
-
-def cross_validation_lambda_search(y, x, metric, learning_model, k_fold, **kwargs):
-    """
-    TODO
-    
-    y: targets
-    x: data samples
-    metric: (function) metric to compute (e.g. accuracy, recall)
-    learning_model: str, method to employ (e.g. 'least_squares', 'ridge_regression')
-    k_fold: number of folds to perform
-    **kwargs: additional arguments for learning method (e.g. lambda, degree)
-    returns: TODO
-    """
-    seed = 1
-    lambdas = np.logspace(-4, 0, 30)
-    # split data in k fold
-    k_indices = build_k_indices(y, k_fold, seed)
-    # define lists to store the loss of training data and test data
-    mse_tr = []
-    mse_te = []
-    metric_tr = []
-    metric_te = []
-    
-    # map to retreive best performing lambda TODO is selecting by the loss the best idea ?
-    loss_to_lambda = {}
-    
-    # ***************************************************
-    # cross validation
-    # ***************************************************
-    for lambd in lambdas:
-        kwargs['lambda_'] = lambd
-        tmp_mse_tr = []
-        tmp_mse_te = []
-        tmp_metric_tr = []
-        tmp_metric_te = []
-        for k in range(len(k_indices)):
-            loss_tr, loss_te, met_tr, met_te = cross_validation_single_fold(y, x, k_indices, k, metric, learning_model, **kwargs)
-            tmp_mse_tr.append(loss_tr)
-            tmp_mse_te.append(loss_te)
-            tmp_metric_tr.append(met_tr)
-            tmp_metric_te.append(met_te)
-        # Appending mean measures over the folds
-        mse_tr.append(np.mean(tmp_mse_tr))
-        mse_te.append(np.mean(tmp_mse_te))
-        metric_tr.append(np.mean(tmp_metric_tr))
-        metric_te.append(np.mean(tmp_metric_te))
-        
-        loss_to_lambda[np.mean(tmp_mse_te)] = lambd
-        
-    # Plotting
-    fig, axes = plt.subplots(2, 1, figsize=(10,7), sharex=True, sharey=False)
-    cross_validation_visualization_loss(lambdas, mse_tr, mse_te, axes[0])
-    cross_validation_visualization_metric(lambdas, metric_tr, metric_te, 'accuracy', axes[1])
-    
-    return loss_to_lambda[np.min(list(loss_to_lambda.keys()))]
 
 
 def cross_validation_hyper_search(y, x, param_name, search_space, metric, learning_model, k_fold, **kwargs):
