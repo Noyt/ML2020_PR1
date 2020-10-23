@@ -155,7 +155,7 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma):
     return w, loss
 
 
-def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
+def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma, norm = 'l2'):
     """
     Regularized logistic regression using gradient descent
     
@@ -165,18 +165,27 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
     initial_w: initial weight vector
     max_iters: number of steps to run for the GD
     gamma: learning rate
+    norm: regularisation norm (l1 or l2)
     """
 
-    def calculate_penalized_loss(y, tx, w, lambda_):
+    def calculate_penalized_loss(y, tx, w, lambda_, norm):
         """compute the loss: negative log likelihood + regularization."""
-        sig = sigmoid(tx.dot(w))
-        trd = (lambda_/2)*np.linalg.norm(w)**2
-        return - (y * np.log(sig) + (1-y) * np.log(1 - sig)).sum() + trd
+        penalty = 0
+        if (norm == 'l1') :
+            penalty = (lambda_/2)*np.linalg.norm(w, ord = 1)
+        elif (norm == 'l2') :
+            penalty = (lambda_/2)*np.linalg.norm(w, ord = 2) 
+        return compute_loss_classification(y, tx, w) + penalty
 
-    def calculate_penalized_gradient(y, tx, w, lambda_):
+    def calculate_penalized_gradient(y, tx, w, lambda_, norm):
         """compute the gradient of penalized loss."""
         sig = sigmoid(tx.dot(w))
-        return tx.T.dot(sig-y)+lambda_*w
+        pen_grad = 0
+        if (norm == 'l1') :
+            pen_grad = (w > 0) * 2 - 1
+        elif (norm == 'l2') :
+            pen_grad = w
+        return tx.T.dot(sig-y) + lambda_ * pen_grad
     
     threshold = 1e-8
     previous_loss = None
@@ -186,8 +195,8 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
     # start the logistic regression
     for iter in range(max_iters):
         # get loss and update w.
-        loss = calculate_penalized_loss(y, tx, w, lambda_)
-        grad = calculate_penalized_gradient(y, tx, w, lambda_)
+        loss = calculate_penalized_loss(y, tx, w, lambda_, norm)
+        grad = calculate_penalized_gradient(y, tx, w, lambda_, norm)
         w = w - gamma*grad
         
         # converge criterion
