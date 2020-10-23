@@ -22,8 +22,7 @@ def compute_loss_regression(y, tx, w, loss='MSE'):
 def compute_loss_classification(y, tx, w):
     """compute the loss: negative log likelihood."""
     sig = sigmoid(tx.dot(w))
-    print(sig)
-    return - (y * np.log(sig) + (1-y) * np.log(1 - sig)).sum()
+    return -(y * np.log(sig) + (1-y) * np.log(1 - sig)).sum()/tx.shape[0]
 
 
 def compute_loss(learning_model, y, tx, w, loss='MSE'):
