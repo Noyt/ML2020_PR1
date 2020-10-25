@@ -6,6 +6,7 @@ import numpy as np
 from costs import *
 from implementations import *
 from plots import *
+from proj1_helpers import *
 
 def build_k_indices(y, k_fold, seed):
     """build k indices for k-fold."""
@@ -18,7 +19,7 @@ def build_k_indices(y, k_fold, seed):
     return np.array(k_indices)
 
 
-def cross_validation_single_fold(y, x, k_indices, k, metric, learning_model, degree, **kwargs):
+def cross_validation_single_fold(y, x, k_indices, k, metric, learning_model, degree, add_offset, **kwargs):
     """
     returns the loss (train and test) and the metric for the k'th set of indices
     
@@ -29,6 +30,7 @@ def cross_validation_single_fold(y, x, k_indices, k, metric, learning_model, deg
     metric: (function) metric to compute (e.g. accuracy, recall)
     learning_model: str, method to employ (e.g. 'least_squares', 'ridge_regression')
     degree: degree of the polynomial expension
+    add_offset: add offset column
     **kwargs: additional arguments for learning method (e.g. lambda, degree)
     returns: training loss, test loss, metric
     """
@@ -52,8 +54,12 @@ def cross_validation_single_fold(y, x, k_indices, k, metric, learning_model, deg
     x_train = build_poly(x_train, degree)
     
     # Adding offset
-    x_test = add_offset(x_test)
-    x_train = add_offset(x_train)
+    if add_offset:
+        x_test = add_off(x_test)
+        x_train = add_off(x_train)
+    
+    # Handling initial_w for required methods
+    kwargs['initial_w'] = np.zeros(x.shape[1] * degree + add_offset)
     
     # learning
     # *************************************************** 
@@ -67,7 +73,7 @@ def cross_validation_single_fold(y, x, k_indices, k, metric, learning_model, deg
     return loss_tr, loss_te, metric_tr, metric_te
 
 
-def cross_validation(y, x, metric, learning_model, k_fold = 4, degree = 1, **kwargs):
+def cross_validation(y, x, metric, learning_model, k_fold = 4, degree = 1, add_offset=True, **kwargs):
     """
     returns the average losses (train and test) and the average metric measures over a k-fold
     
@@ -77,6 +83,7 @@ def cross_validation(y, x, metric, learning_model, k_fold = 4, degree = 1, **kwa
     learning_model: str, method to employ (e.g. 'least_squares', 'ridge_regression')
     k_fold: number of folds to perform
     degree: degree of the polynomial expension
+    add_offset: add offset column
     **kwargs: additional arguments for learning method (e.g. lambda, degree)
     returns: mean training loss, test loss, training metric, test metric
     """
@@ -94,7 +101,7 @@ def cross_validation(y, x, metric, learning_model, k_fold = 4, degree = 1, **kwa
     # ***************************************************
 
     for k in range(len(k_indices)):
-        loss_tr, loss_te, metric_tr, metric_te = cross_validation_single_fold(y, x, k_indices, k, metric, learning_model, degree, **kwargs)
+        loss_tr, loss_te, metric_tr, metric_te = cross_validation_single_fold(y, x, k_indices, k, metric, learning_model, degree, add_offset, **kwargs)
         losses_tr.append(loss_tr)
         losses_te.append(loss_te)
         metrics_tr.append(metric_tr)
@@ -136,7 +143,7 @@ def run_model(learning_model, y, x, **kwargs):
         
 
 
-def cross_validation_hyper_search(y, x, param_name, search_space, metric, learning_model, k_fold, degree=1, ax= None, **kwargs):
+def cross_validation_hyper_search(y, x, param_name, search_space, metric, learning_model, k_fold, degree=1, add_offset=True, ax= None, **kwargs):
     """
     Runs a hyperparameter search for a parameter given to the learning model.
     
@@ -148,6 +155,7 @@ def cross_validation_hyper_search(y, x, param_name, search_space, metric, learni
     learning_model: str, method to employ (e.g. 'least_squares', 'ridge_regression')
     k_fold: number of folds to perform
     degree: degree of the polynomial expension
+    add_offset: add offset column
     **kwargs: additional arguments for learning method (e.g. lambda, degree)
     returns: minimum average test loss achieved and its corresponding hyperparameter
     """
@@ -174,7 +182,7 @@ def cross_validation_hyper_search(y, x, param_name, search_space, metric, learni
         tmp_metric_tr = []
         tmp_metric_te = []
         for k in range(len(k_indices)):
-            loss_tr, loss_te, met_tr, met_te = cross_validation_single_fold(y, x, k_indices, k, metric, learning_model, degree, **kwargs)
+            loss_tr, loss_te, met_tr, met_te = cross_validation_single_fold(y, x, k_indices, k, metric, learning_model, degree, add_offset, **kwargs)
             tmp_mse_tr.append(loss_tr)
             tmp_mse_te.append(loss_te)
             tmp_metric_tr.append(met_tr)
@@ -204,7 +212,7 @@ def cross_validation_hyper_search(y, x, param_name, search_space, metric, learni
     return max_metric_te, metric_to_param[max_metric_te]
 
 
-def cross_validation_degree_and_param_search(y, x, param_name, degree_space, param_space, metric, learning_model, k_fold, **kwargs):
+def cross_validation_degree_and_param_search(y, x, param_name, degree_space, param_space, metric, learning_model, k_fold, add_offset=True, **kwargs):
     """
     Runs a double dimension hyperparameter search: degree used for polynomial extension + a parameter given to the learning model (e.g. lambda_)
     Performance is measured by achieving lowest mean test loss over all folds. 
@@ -212,11 +220,12 @@ def cross_validation_degree_and_param_search(y, x, param_name, degree_space, par
     y: targets
     x: data samples, not standardised, no offset
     param_name: str, parameter to search, must be the same as would be provided in kwargs to the learning model
-    search_space: iterable, values from which the parameter will be searched
+    degree_space: values from which the optimal degree is searched
+    param_space: iterable, values from which the parameter will be searched
     metric: (function) metric to compute (e.g. accuracy, recall)
     learning_model: str, method to employ (e.g. 'least_squares', 'ridge_regression')
     k_fold: number of folds to perform
-    degree: degree of the polynomial expension
+    add_offset: add offset column
     **kwargs: additional arguments for learning method (e.g. lambda, degree)
     returns: best performing pair of parameters
     """
@@ -226,9 +235,9 @@ def cross_validation_degree_and_param_search(y, x, param_name, degree_space, par
     metric_to_params = {}
     
     for degree, ax in zip(degree_space, axes.flatten()):
-        kwargs['initial_w'] = np.zeros((x.shape[1]-1) * degree + 1)
+        kwargs['initial_w'] = np.zeros(x.shape[1] * degree + add_offset)
         # TODO loss, param = cross_validation_hyper_search(y, tx, param_name, param_space , metric, learning_model, k_fold, degree, ax, **kwargs)
-        met, param = cross_validation_hyper_search(y, x, param_name, param_space , metric, learning_model, k_fold, degree, ax, **kwargs)
+        met, param = cross_validation_hyper_search(y, x, param_name, param_space , metric, learning_model, k_fold, degree, add_offset, ax, **kwargs)
         ax.set_title("Degree = {}".format(degree))
         # TODO loss_to_params[loss] = (degree, param)
         metric_to_params[met] = (degree, param)

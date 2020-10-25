@@ -113,7 +113,7 @@ def build_poly(tx, degree) :
     return poly
 
 
-def add_offset(tx):
+def add_off(tx):
     """
     Adds an offset column, whcih is composed only of 1s.
     
@@ -121,7 +121,6 @@ def add_offset(tx):
     """
     return np.c_[np.ones(len(tx[:,0])), tx]
             
-    
     
 def split_data(x, y, ratio, seed=1):
     """
