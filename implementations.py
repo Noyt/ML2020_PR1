@@ -109,13 +109,13 @@ def ridge_regression(y, tx, lambda_):
     lambda_: regularisation parameter
     return: optimal weights and mse
     """
+    N = y.shape[0]
     I = np.identity(tx.shape[1])
-    lb = lambda_*(2*len(y))
+    lb = lambda_*(2*N)
     w = np.linalg.solve(tx.T.dot(tx)+lb*I, tx.T.dot(y))
     
     #Compute mse loss
     err = y-tx.dot(w)
-    N = y.shape[0]
     loss = (1/(2*N))*((err.T).dot(err))
     return w, loss
 

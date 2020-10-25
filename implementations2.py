@@ -1,4 +1,5 @@
 import numpy as np
+from costs import *
 
 def reg_logistic_regression_norm(y, tx, lambda_, initial_w, max_iters, gamma, norm = 'l2'):
     """
