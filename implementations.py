@@ -84,7 +84,7 @@ def least_squares_SGD(y, tx, initial_w, max_iters, gamma):
 def least_squares(y, tx):
     """
     Calculate the least squares solution.
-    return: optimal weights and rmse
+    return: optimal weights and mse
     """
     # Compute closed form solution
     w = np.linalg.solve(tx.T.dot(tx), tx.T.dot(y))
@@ -108,12 +108,10 @@ def ridge_regression(y, tx, lambda_):
     lb = lambda_*(2*len(y))
     w = np.linalg.solve(tx.T.dot(tx)+lb*I, tx.T.dot(y))
     
-    #Compute rmse loss
+    #Compute mse loss
     err = y-tx.dot(w)
     N = y.shape[0]
     loss = (1/(2*N))*((err.T).dot(err))
-    # TODO now is mse, for comparison sake
-    #loss = np.sqrt(2*loss)
     return w, loss
 
 
@@ -185,7 +183,7 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma, norm = 
             pen_grad = (w > 0) * 2 - 1
         elif (norm == 'l2') :
             pen_grad = w
-        return tx.T.dot(sig-y) + lambda_ * pen_grad
+        return tx.T.dot(sig-y)/tx.shape[0] + lambda_ * pen_grad
     
     threshold = 1e-8
     previous_loss = None

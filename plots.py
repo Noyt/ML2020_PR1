@@ -14,7 +14,8 @@ def cross_validation_visualization_loss(lambds, mse_tr, mse_te, param_name, ax):
     ax.set_title("cross validation")
     ax.legend(loc=2)
     ax.grid(True)
-    
+    return ax
+
 def cross_validation_visualization_metric(lambds, metric_tr, metric_te, param_name, metric_name, ax):
     """visualization the curves of the metric for train and test."""
     ax.semilogx(lambds, metric_tr, marker=".", color='b', label='train {}'.format(metric_name))
@@ -24,3 +25,4 @@ def cross_validation_visualization_metric(lambds, metric_tr, metric_te, param_na
     ax.set_title("cross validation")
     ax.legend(loc=2)
     ax.grid(True)
+    return ax
