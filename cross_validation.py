@@ -203,12 +203,11 @@ def cross_validation_hyper_search(y, x, param_name, search_space, metric, learni
         cross_validation_visualization_loss(search_space, mse_tr, mse_te, param_name, axes[0])
         cross_validation_visualization_metric(search_space, metric_tr, metric_te, param_name, 'accuracy', axes[1])
     else:
-        cross_validation_visualization_loss(search_space, mse_tr, mse_te, param_name, ax)
+        cross_validation_visualization_metric(search_space, metric_tr, metric_te, param_name, 'accuracy', ax)
     
     min_loss_te = np.min(list(loss_to_param.keys()))
     max_metric_te = np.max(list(metric_to_param.keys()))
     
-    # TOD0 return min_loss_te, loss_to_param[min_loss_te]
     return max_metric_te, metric_to_param[max_metric_te]
 
 
@@ -229,19 +228,15 @@ def cross_validation_degree_and_param_search(y, x, param_name, degree_space, par
     **kwargs: additional arguments for learning method (e.g. lambda, degree)
     returns: best performing pair of parameters
     """
-    fig, axes = plt.subplots(3, 3, figsize=(15,10), sharex=True, sharey=False)
+    fig, axes = plt.subplots(3, 3, figsize=(15,10), sharex=True, sharey=True)
     
-    # TODO loss_to_params = {}
     metric_to_params = {}
     
     for degree, ax in zip(degree_space, axes.flatten()):
         kwargs['initial_w'] = np.zeros(x.shape[1] * degree + add_offset)
-        # TODO loss, param = cross_validation_hyper_search(y, tx, param_name, param_space , metric, learning_model, k_fold, degree, ax, **kwargs)
         met, param = cross_validation_hyper_search(y, x, param_name, param_space , metric, learning_model, k_fold, degree, add_offset, ax, **kwargs)
         ax.set_title("Degree = {}".format(degree))
-        # TODO loss_to_params[loss] = (degree, param)
         metric_to_params[met] = (degree, param)
-    # TODO min_loss_te = np.min(list(loss_to_params.keys()))
+        
     max_met_te = np.max(list(metric_to_params.keys()))
-    # TODO return loss_to_params[min_loss_te]
     return metric_to_params[max_met_te]
