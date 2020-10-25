@@ -47,18 +47,22 @@ def create_csv_submission(ids, y_pred, name):
             writer.writerow({'Id':int(r1),'Prediction':int(r2)})
 
             
-def standardise(tx):
+def standardise(tx, mean=None, std=None):
     """
     Standardises over N samples each of the D features in the provided dataset
+    If a mean and std are provided, then standardisation is done with these values
     
     tx: dataset (NxD)
-    returns: standardised dataset
+    mean: mean to substract
+    std: std to divide by
+    returns: standardised dataset, mean and std
     """
-    mean = np.mean(tx, axis=0)
+    if((mean is None) and (std is None)):
+        mean = np.mean(tx, axis=0)
+        std = np.std(tx, axis=0)
     tx = tx - mean
-    std = np.std(tx, axis=0)
     tx = tx / std
-    return tx
+    return tx, mean, std
 
 def normalise(tx):
     """
@@ -84,12 +88,14 @@ def mass_abs(tx) :
     
     tx: The dataset in which we have the DER_mass_MMC column we want to modifiy
     """
-    nb999 = np.sum(tx[:,0] == -999)
+    x = tx.copy()
+    nb999 = np.sum(x[:,0] == -999)
     uni = np.random.uniform(60, 80, nb999)
-    for i in range(tx.shape[1]) :
-        if (tx[i, 0] == -999) :
-            tx[i, 0] = uni[int(np.random.randint(nb999, size = 1))]
-    tx[:,0] = np.abs(tx[:,0] - 125)
+    for i in range(x.shape[1]) :
+        if (x[i, 0] == -999) :
+            x[i, 0] = uni[int(np.random.randint(nb999, size = 1))]
+    x[:,0] = np.abs(x[:,0] - 125)
+    return x
     
 def build_poly(tx, degree) :
     """

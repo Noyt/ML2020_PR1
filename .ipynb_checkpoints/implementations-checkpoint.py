@@ -3,17 +3,17 @@
 """ML methods"""
 
 import numpy as np
-from costs import *
-from proj1_helpers import *
 
 def least_squares_GD(y, tx, initial_w, max_iters, gamma):
     """
     Linear regression using gradient descent
+    
     y: targets
     tx: training data samples
     initial_w: initial weight vector
     max_iters: number of steps to run for the GD
     gamma: learning rate
+    return: optimal weights and mse
     """
 
     def compute_gradient(y, tx, w):
@@ -28,7 +28,7 @@ def least_squares_GD(y, tx, initial_w, max_iters, gamma):
 
     def gradient_descent(y, tx, initial_w, max_iters, gamma):
         """Gradient descent algorithm."""
-        # Define parameters to store w and loss
+
         w = initial_w
         for n_iter in range(max_iters):
             # ***************************************************
@@ -53,8 +53,9 @@ def least_squares_SGD(y, tx, initial_w, max_iters, gamma):
     y: targets
     tx: training data samples
     initial_w: initial weight vector
-    max_iters: number of steps to run for the GD
+    max_iters: number of steps to run for the SGD
     gamma: learning rate
+    return: optimal weights and mse
     """
     
     def compute_stoch_gradient(y, tx, w, batch_size):
@@ -83,8 +84,11 @@ def least_squares_SGD(y, tx, initial_w, max_iters, gamma):
     
 def least_squares(y, tx):
     """
-    Calculate the least squares solution.
-    return: optimal weights and rmse
+    Least squares regression using normal equations
+    
+    y: targets
+    tx: training data samples
+    return: optimal weights and mse
     """
     # Compute closed form solution
     w = np.linalg.solve(tx.T.dot(tx), tx.T.dot(y))
@@ -93,7 +97,6 @@ def least_squares(y, tx):
     err = y-tx.dot(w)
     N = y.shape[0]
     loss = (1/(2*N))*((err.T).dot(err))
-    #TODO
     return w, loss
 
 
@@ -101,19 +104,19 @@ def ridge_regression(y, tx, lambda_):
     """
     Ridge regression using normal equations
     
-    lambda_: regularization parameter
-    returns: loss, w
+    y: targets
+    tx: training data samples
+    lambda_: regularisation parameter
+    return: optimal weights and mse
     """
     I = np.identity(tx.shape[1])
     lb = lambda_*(2*len(y))
     w = np.linalg.solve(tx.T.dot(tx)+lb*I, tx.T.dot(y))
     
-    #Compute rmse loss
+    #Compute mse loss
     err = y-tx.dot(w)
     N = y.shape[0]
     loss = (1/(2*N))*((err.T).dot(err))
-    # TODO now is mse, for comparison sake
-    #loss = np.sqrt(2*loss)
     return w, loss
 
 
@@ -142,8 +145,6 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma):
     for iter in range(max_iters):
         # get loss and update w.
         loss = compute_loss_classification(y, tx, w)
-        if iter % 100 == 0:
-            print("Current iteration={i}, loss={l}".format(i=iter, l=loss))
         grad = calculate_gradient(y, tx, w)
         w = w - gamma * grad
         # converge criterion
@@ -155,7 +156,7 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma):
     return w, loss
 
 
-def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma, norm = 'l2'):
+def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
     """
     Regularized logistic regression using gradient descent
     
@@ -165,27 +166,17 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma, norm = 
     initial_w: initial weight vector
     max_iters: number of steps to run for the GD
     gamma: learning rate
-    norm: regularisation norm (l1 or l2)
     """
-
-    def calculate_penalized_loss(y, tx, w, lambda_, norm):
+    
+    def calculate_penalized_loss(y, tx, w, lambda_):
         """compute the loss: negative log likelihood + regularization."""
-        penalty = 0
-        if (norm == 'l1') :
-            penalty = (lambda_/2)*np.linalg.norm(w, ord = 1)
-        elif (norm == 'l2') :
-            penalty = (lambda_/2)*np.linalg.norm(w, ord = 2) 
+        penalty = (lambda_/2)*np.linalg.norm(w, ord = 2) 
         return compute_loss_classification(y, tx, w) + penalty
 
-    def calculate_penalized_gradient(y, tx, w, lambda_, norm):
+    def calculate_penalized_gradient(y, tx, w, lambda_):
         """compute the gradient of penalized loss."""
         sig = sigmoid(tx.dot(w))
-        pen_grad = 0
-        if (norm == 'l1') :
-            pen_grad = (w > 0) * 2 - 1
-        elif (norm == 'l2') :
-            pen_grad = w
-        return tx.T.dot(sig-y) + lambda_ * pen_grad
+        return tx.T.dot(sig-y) + lambda_ * w
     
     threshold = 1e-8
     previous_loss = None
@@ -195,8 +186,8 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma, norm = 
     # start the logistic regression
     for iter in range(max_iters):
         # get loss and update w.
-        loss = calculate_penalized_loss(y, tx, w, lambda_, norm)
-        grad = calculate_penalized_gradient(y, tx, w, lambda_, norm)
+        loss = calculate_penalized_loss(y, tx, w, lambda_)
+        grad = calculate_penalized_gradient(y, tx, w, lambda_)
         w = w - gamma*grad
         
         # converge criterion
@@ -206,3 +197,59 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma, norm = 
             previous_loss = loss
     
     return w, loss
+
+
+################ Helpers ###################
+
+def compute_loss_regression(y, tx, w, loss='MSE'):
+    """Calculate the loss.
+
+    You can calculate the loss using mse or mae.
+    """
+    if loss not in ['MSE', 'MAE']:
+        raise Exception("Loss function {} is not supported".format(loss))
+    else:
+        err = y-tx.dot(w)
+        N = y.shape[0]
+        if loss=='MSE':
+            return (1/(2*N))*((err.T).dot(err))
+        elif loss=='MAE':
+            return (1/(2*N))*(np.abs(err).sum())
+        
+        
+def compute_loss_classification(y, tx, w):
+        """compute the loss: negative log likelihood."""
+        sig = sigmoid(tx.dot(w))
+        return - (y * np.log(sig) + (1-y) * np.log(1 - sig)).sum()
+
+    
+def sigmoid(t):
+    """apply the sigmoid function on t."""
+    ret = 1 / (1 + np.exp(-t))
+    return np.clip(ret, 10**(-10), 1 - 10**(-10)) # Escape overflows
+    
+    
+def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
+    """
+    Generate a minibatch iterator for a dataset.
+    Takes as input two iterables (here the output desired values 'y' and the input data 'tx')
+    Outputs an iterator which gives mini-batches of `batch_size` matching elements from `y` and `tx`.
+    Data can be randomly shuffled to avoid ordering in the original data messing with the randomness of the minibatches.
+    Example of use :
+    for minibatch_y, minibatch_tx in batch_iter(y, tx, 32):
+        <DO-SOMETHING>
+    """
+    data_size = len(y)
+
+    if shuffle:
+        shuffle_indices = np.random.permutation(np.arange(data_size))
+        shuffled_y = y[shuffle_indices]
+        shuffled_tx = tx[shuffle_indices]
+    else:
+        shuffled_y = y
+        shuffled_tx = tx
+    for batch_num in range(num_batches):
+        start_index = batch_num * batch_size
+        end_index = min((batch_num + 1) * batch_size, data_size)
+        if start_index != end_index:
+            yield shuffled_y[start_index:end_index], shuffled_tx[start_index:end_index]
