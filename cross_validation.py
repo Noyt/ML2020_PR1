@@ -18,7 +18,7 @@ def build_k_indices(y, k_fold, seed):
     return np.array(k_indices)
 
 
-def cross_validation_single_fold(y, x, k_indices, k, metric, learning_model, **kwargs):
+def cross_validation_single_fold(y, x, k_indices, k, metric, learning_model, degree, **kwargs):
     """
     returns the loss (train and test) and the metric for the k'th set of indices
     
@@ -28,6 +28,7 @@ def cross_validation_single_fold(y, x, k_indices, k, metric, learning_model, **k
     k: index for the set of indices to use
     metric: (function) metric to compute (e.g. accuracy, recall)
     learning_model: str, method to employ (e.g. 'least_squares', 'ridge_regression')
+    degree: degree of the polynomial expension
     **kwargs: additional arguments for learning method (e.g. lambda, degree)
     returns: training loss, test loss, metric
     """
@@ -41,6 +42,19 @@ def cross_validation_single_fold(y, x, k_indices, k, metric, learning_model, **k
     x_test = x[test_indices]
     y_train = y[train_indices] 
     x_train = x[train_indices]
+    
+    # Standardising
+    x_train, mean_tr, std_tr = standardise(x_train)
+    x_test, _, _ = standardise(x_test, mean_tr, std_tr)
+    
+    # Polynomial expansion
+    x_test = build_poly(x_test, degree)
+    x_train = build_poly(x_train, degree)
+    
+    # Adding offset
+    x_test = add_offset(x_test)
+    x_train = add_offset(x_train)
+    
     # learning
     # *************************************************** 
     w, loss_tr = run_model(learning_model, y_train, x_train, **kwargs) 
@@ -55,10 +69,10 @@ def cross_validation_single_fold(y, x, k_indices, k, metric, learning_model, **k
 
 def cross_validation(y, x, metric, learning_model, k_fold = 4, degree = 1, **kwargs):
     """
-    returns the average losses (train and test) and the average measure over a k-fold
+    returns the average losses (train and test) and the average metric measures over a k-fold
     
     y: targets
-    x: data samples
+    x: data samples, not standardised, no offset added
     metric: (function) metric to compute (e.g. accuracy, recall)
     learning_model: str, method to employ (e.g. 'least_squares', 'ridge_regression')
     k_fold: number of folds to perform
@@ -75,15 +89,12 @@ def cross_validation(y, x, metric, learning_model, k_fold = 4, degree = 1, **kwa
     metrics_tr = []
     metrics_te = []
     
-    # Polynomial expansion
-    poly = build_poly(x, degree)
-    
     # ***************************************************
     # cross validation
     # ***************************************************
 
     for k in range(len(k_indices)):
-        loss_tr, loss_te, metric_tr, metric_te = cross_validation_single_fold(y, poly, k_indices, k, metric, learning_model, **kwargs)
+        loss_tr, loss_te, metric_tr, metric_te = cross_validation_single_fold(y, x, k_indices, k, metric, learning_model, degree, **kwargs)
         losses_tr.append(loss_tr)
         losses_te.append(loss_te)
         metrics_tr.append(metric_tr)
@@ -130,7 +141,7 @@ def cross_validation_hyper_search(y, x, param_name, search_space, metric, learni
     Runs a hyperparameter search for a parameter given to the learning model.
     
     y: targets
-    x: data samples
+    x: data samples, not standardised, no offset
     param_name: str, parameter to search, must be the same as would be provided in kwargs to the learning model
     search_space: iterable, values from which the parameter will be searched
     metric: (function) metric to compute (e.g. accuracy, recall)
@@ -153,9 +164,6 @@ def cross_validation_hyper_search(y, x, param_name, search_space, metric, learni
     loss_to_param = {}
     metric_to_param = {}
     
-    # Polynomial expansion
-    poly = build_poly(x, degree)
-    
     # ***************************************************
     # cross validation
     # ***************************************************
@@ -166,7 +174,7 @@ def cross_validation_hyper_search(y, x, param_name, search_space, metric, learni
         tmp_metric_tr = []
         tmp_metric_te = []
         for k in range(len(k_indices)):
-            loss_tr, loss_te, met_tr, met_te = cross_validation_single_fold(y, poly, k_indices, k, metric, learning_model, **kwargs)
+            loss_tr, loss_te, met_tr, met_te = cross_validation_single_fold(y, x, k_indices, k, metric, learning_model, degree, **kwargs)
             tmp_mse_tr.append(loss_tr)
             tmp_mse_te.append(loss_te)
             tmp_metric_tr.append(met_tr)
@@ -185,7 +193,6 @@ def cross_validation_hyper_search(y, x, param_name, search_space, metric, learni
     if ax == None:
         fig, axes = plt.subplots(2, 1, figsize=(10,7), sharex=True, sharey=False)
         cross_validation_visualization_loss(search_space, mse_tr, mse_te, param_name, axes[0])
-        # TODO accuracy make generic
         cross_validation_visualization_metric(search_space, metric_tr, metric_te, param_name, 'accuracy', axes[1])
     else:
         cross_validation_visualization_loss(search_space, mse_tr, mse_te, param_name, ax)
@@ -199,7 +206,19 @@ def cross_validation_hyper_search(y, x, param_name, search_space, metric, learni
 
 def cross_validation_degree_and_param_search(y, x, param_name, degree_space, param_space, metric, learning_model, k_fold, **kwargs):
     """
-    TODO
+    Runs a double dimension hyperparameter search: degree used for polynomial extension + a parameter given to the learning model (e.g. lambda_)
+    Performance is measured by achieving lowest mean test loss over all folds. 
+    
+    y: targets
+    x: data samples, not standardised, no offset
+    param_name: str, parameter to search, must be the same as would be provided in kwargs to the learning model
+    search_space: iterable, values from which the parameter will be searched
+    metric: (function) metric to compute (e.g. accuracy, recall)
+    learning_model: str, method to employ (e.g. 'least_squares', 'ridge_regression')
+    k_fold: number of folds to perform
+    degree: degree of the polynomial expension
+    **kwargs: additional arguments for learning method (e.g. lambda, degree)
+    returns: best performing pair of parameters
     """
     fig, axes = plt.subplots(3, 3, figsize=(15,10), sharex=True, sharey=False)
     

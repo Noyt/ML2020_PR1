@@ -97,17 +97,29 @@ def mass_abs(tx) :
     x[:,0] = np.abs(x[:,0] - 125)
     return x
     
+    
 def build_poly(tx, degree) :
     """
     Polynomial extension from j=1 to degree of each components of tx 
+    
+    returns: augmented matrix
     """
     shape = tx.shape
-    poly = np.zeros((shape[0], (shape[1] - 1) * degree + 1)) # Taking into account the bias
+    poly = np.zeros((shape[0], shape[1] * degree))
     poly[:,:shape[1]] = tx
-    for i in range(2, degree + 1) :
-        for j in range(1, shape[1]) :
-            poly[:,(shape[1] - 1) * (i - 1) + j] = tx[:,j] ** i
+    for deg in range(2, degree + 1) :
+        for j in range(0, shape[1]) :
+            poly[:, shape[1] * (deg - 1) + j] = tx[:,j] ** deg
     return poly
+
+
+def add_offset(tx):
+    """
+    Adds an offset column, whcih is composed only of 1s.
+    
+    returns: augmented matrix
+    """
+    return np.c_[np.ones(len(tx[:,0])), tx]
             
     
     
