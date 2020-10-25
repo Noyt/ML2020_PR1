@@ -165,6 +165,7 @@ def compute_accuracy_log_reg(weights, labels, data):
     acc = (TN+TP)/len(labels)
     return acc
 
+
 def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
     """
     Generate a minibatch iterator for a dataset.

@@ -117,6 +117,8 @@ def run_model(learning_model, y, x, **kwargs):
     elif mod == 'logistic_regression':
         return logistic_regression(y, x, kwargs['initial_w'], kwargs['max_iters'], kwargs['gamma'])
     elif mod == 'reg_logistic_regression':
+        return reg_logistic_regression(y, x, kwargs['lambda_'], kwargs['initial_w'], kwargs['max_iters'], kwargs['gamma'])
+    elif mod == 'reg_logistic_regression_norm':
         return reg_logistic_regression(y, x, kwargs['lambda_'], kwargs['initial_w'], kwargs['max_iters'], kwargs['gamma'], kwargs['norm'])
     else:
         raise Exception('Learning method {} is currently not supported.'.format(learning_model))
