@@ -5,8 +5,6 @@ Repository organisation:
 
 - Necessary code for the mandatory implementations can be found in the implementations.py file. This file contains all necessary code and does not require any other import save numpy.
 
-- The file implementations2.py contains an addtional method we are working on, but should not be taken into account for this project.
-
 - The project1 notebook contains our reasoning for the project. In the first part we implement the different mandatory functions and run them on the dataset using cross validation. In the second part we try to improve the predictions of our baseline model, ridge regression, using different techniques (data preprocessing, adding offset, polynomial extension, hyperparameter search).
 
 - The data should be placed in a folder name 'data' at the root of the repository. It should contain files test.csv and train.csv.
