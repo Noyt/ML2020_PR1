@@ -124,17 +124,19 @@ OUTPUT_PATH = 'data/output.csv'
 y, tX, ids = load_csv_data(DATA_TRAIN_PATH)
 _, tX_test, ids_test = load_csv_data(DATA_TEST_PATH)
 
-degree = 10
+degree = 9
 lambda_ = 1.38e-10
 
 np.random.seed(1)
 
 tx = mass_abs(tX)
+tx = np.delete(tx, [15, 18, 20], axis = 1)
 tx, mean_train, std_train = standardise(tx)
 poly_tx = build_poly(tx, degree = degree)
 poly_tx = add_off(poly_tx)
 
 tx_test = mass_abs(tX_test)
+tx_test = np.delete(tx_test, [15, 18, 20], axis = 1)
 tx_test, _, _ = standardise(tx_test, mean_train, std_train)
 poly_tx_test = build_poly(tx_test, degree = degree)
 poly_tx_test = add_off(poly_tx_test)
