@@ -73,7 +73,7 @@ def cross_validation_single_fold(y, x, k_indices, k, metric, learning_model, deg
     return loss_tr, loss_te, metric_tr, metric_te
 
 
-def cross_validation(y, x, metric, learning_model, k_fold = 4, degree = 1, add_offset=True, **kwargs):
+def cross_validation(y, x, metric, learning_model, k_fold = 4, degree = 1, add_offset=False, **kwargs):
     """
     returns the average losses (train and test) and the average metric measures over a k-fold
     
@@ -106,9 +106,6 @@ def cross_validation(y, x, metric, learning_model, k_fold = 4, degree = 1, add_o
         losses_te.append(loss_te)
         metrics_tr.append(metric_tr)
         metrics_te.append(metric_te)
-    
-    print('losses tr', losses_tr)
-    print('losses te', losses_te)
     
     return np.mean(losses_tr), np.mean(losses_te), np.mean(metrics_tr), np.mean(metrics_te)
         
@@ -143,7 +140,7 @@ def run_model(learning_model, y, x, **kwargs):
         
 
 
-def cross_validation_hyper_search(y, x, param_name, search_space, metric, learning_model, k_fold, degree=1, add_offset=True, ax= None, **kwargs):
+def cross_validation_hyper_search(y, x, param_name, search_space, metric, learning_model, k_fold, degree=1, add_offset=False, ax= None, **kwargs):
     """
     Runs a hyperparameter search for a parameter given to the learning model.
     
@@ -211,7 +208,7 @@ def cross_validation_hyper_search(y, x, param_name, search_space, metric, learni
     return max_metric_te, metric_to_param[max_metric_te]
 
 
-def cross_validation_degree_and_param_search(y, x, param_name, degree_space, param_space, metric, learning_model, k_fold, add_offset=True, **kwargs):
+def cross_validation_degree_and_param_search(y, x, param_name, degree_space, param_space, metric, learning_model, k_fold, add_offset=False, **kwargs):
     """
     Runs a double dimension hyperparameter search: degree used for polynomial extension + a parameter given to the learning model (e.g. lambda_)
     Performance is measured by achieving lowest mean test loss over all folds. 
@@ -237,6 +234,8 @@ def cross_validation_degree_and_param_search(y, x, param_name, degree_space, par
         met, param = cross_validation_hyper_search(y, x, param_name, param_space , metric, learning_model, k_fold, degree, add_offset, ax, **kwargs)
         ax.set_title("Degree = {}".format(degree))
         metric_to_params[met] = (degree, param)
-        
+    
+    fig.savefig("hyperSearch")
+    
     max_met_te = np.max(list(metric_to_params.keys()))
     return metric_to_params[max_met_te]

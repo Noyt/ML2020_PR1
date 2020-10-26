@@ -202,3 +202,9 @@ def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
         if start_index != end_index:
             yield shuffled_y[start_index:end_index], shuffled_tx[start_index:end_index]
             
+            
+def display_cv_results(loss_tr, loss_te, acc_tr, acc_te):
+    print('Mean training loss: {}'.format(loss_tr))
+    print('Mean testing loss: {}'.format(loss_te))
+    print('Mean training accuracy: {}'.format(acc_tr))
+    print('Mean testing accuracy: {}'.format(acc_te))
